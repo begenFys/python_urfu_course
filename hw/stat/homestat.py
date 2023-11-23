@@ -1,29 +1,16 @@
 #!/usr/bin/env python3
 from typing import Optional
 
-import gender_guesser.detector as gender
-import translators as ts
-
 Stat = dict[str, list[dict[str, str]]]
-detector = gender.Detector(case_sensitive=False)
 
 
-def translate_to_en(text: str) -> str:
-    return ts.translate_text(text, to_language="en")
-
-
-def is_male(name: str) -> bool:
-    return detector.get_gender(translate_to_en(name)) in [
-        "male",
-        "mostly_male",
-    ] or name.lower() in ["ильгиз", "вачаган", "ленар"]
-
-
-def is_female(name: str) -> bool:
-    return detector.get_gender(translate_to_en(name)) in [
-        "female",
-        "mostly_female",
-    ] or name.lower() in ["любовь"]
+def check_gender(name: str, gender: str = "male"):
+    name = name.lower()
+    exceptions = ['лёва', 'игорь', 'илья', 'никита']
+    if name[-1] in 'аяь' and name not in exceptions:
+        return gender == "female"
+    else:
+        return gender == "male"
 
 
 def make_stat(filename: str) -> Stat:
@@ -42,7 +29,7 @@ def make_stat(filename: str) -> Stat:
         if "h3" in row:
             # Нашли год
             start = row.index("h3") + 3
-            year = row[start : start + 4]
+            year = row[start: start + 4]
 
             current_year = year
             stat[current_year] = []
@@ -109,7 +96,7 @@ def extract_general_male(stat: Stat, year: str = None):
         stat = extract_year(stat, year)
     male_stat = []
     for name_stat in stat:
-        if is_male(name_stat[0]):
+        if check_gender(name_stat[0], gender="male"):
             male_stat.append(name_stat)
     return male_stat
 
@@ -126,7 +113,7 @@ def extract_general_female(stat: Stat, year: str = None):
         stat = extract_year(stat, year)
     female_stat = []
     for name_stat in stat:
-        if is_female(name_stat[0]):
+        if check_gender(name_stat[0], gender="female"):
             female_stat.append(name_stat)
     return female_stat
 
